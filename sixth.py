@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 n = 20
+x = np.arange(-1.8, 2 + 1e-10, 0.2)
 
 
 def lsc(smp_x, smp_y):
@@ -37,7 +38,6 @@ def lad(smp_x, smp_y):
 
 
 e = ss.norm.rvs(size=n, loc=0, scale=1)
-x = np.arange(-1.8, 2 + 1e-10, 0.2)
 y1 = 2 + 2 * x + e
 y2 = 2 + 2 * x + e
 y2[0] += 10
@@ -66,3 +66,42 @@ def draw_results(y, name):
 
 draw_results(y1, 'Выборка без возмущений')
 draw_results(y2, 'Выборка с возмущениями')
+
+reps = 1000
+
+
+def get_y(comment):
+    te = ss.norm.rvs(size=n, loc=0, scale=1)
+    ty = 2 + 2 * x + te
+    if comment == 'with':
+        ty[0] += 10
+        ty[n - 1] -= 10
+    return ty
+
+
+def test(func, comment):
+    a, b = [], []
+    for _ in range(reps):
+        ty = get_y(comment)
+        res = func(x, ty)
+        a.append(res['a'])
+        b.append(res['b'])
+
+    cola = [np.abs(2 - _a) for _a in a]
+    ea = sum(cola) / reps
+    colb = [np.abs(2 - _b) for _b in b]
+    eb = sum(colb) / reps
+
+    cola = [_a ** 2 for _a in cola]
+    colb = [_b ** 2 for _b in colb]
+    ea2 = sum(cola) / reps
+    eb2 = sum(colb) / reps
+    da = ea2 - ea ** 2
+    db = eb2 - eb ** 2
+    print(func.__name__)
+    print('ea={:.4f}, eb={:.4f}'.format(ea, eb))
+    print('da={:.4f}, db={:.4f}'.format(da, db))
+
+
+test(lsc, 'with')
+test(lad, 'with')
